@@ -121,22 +121,30 @@ function RankCard({ row, isMe }: { row: RankRow; isMe: boolean }) {
 }
 
 function RankBadge({ rank }: { rank: number }) {
-  const medal =
+  const medals: { [key: number]: string } = {
+    1: "🥇",
+    2: "🥈",
+    3: "🥉",
+  };
+
+  const medal = medals[rank];
+  const bgColor =
     rank === 1
-      ? "bg-gold/20 text-gold ring-gold/40"
+      ? "bg-gold/20 ring-gold/40"
       : rank === 2
-      ? "bg-zinc-300/15 text-zinc-300 ring-zinc-300/30"
+      ? "bg-zinc-300/15 ring-zinc-300/30"
       : rank === 3
-      ? "bg-amber-700/20 text-amber-600 ring-amber-700/40"
-      : "bg-secondary text-muted-foreground ring-transparent";
+      ? "bg-amber-700/20 ring-amber-700/40"
+      : "bg-secondary ring-transparent";
+
   return (
     <div
       className={cn(
-        "font-score flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-base font-bold ring-1",
-        medal
+        "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-xl ring-1",
+        bgColor
       )}
     >
-      {rank === 1 ? <Crown className="h-5 w-5" /> : rank}
+      {medal || <span className="font-score font-bold text-muted-foreground">{rank}</span>}
     </div>
   );
 }
