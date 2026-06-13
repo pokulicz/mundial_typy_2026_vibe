@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
-type FilterKey = "OPEN" | Phase;
+type FilterKey = "OPEN" | "LIVE" | Phase;
 
 export default function Matches() {
   const { data: matches, isPending } = useMatches();
@@ -33,10 +33,17 @@ export default function Matches() {
     return m;
   }, [myPreds]);
 
+  const liveCount = useMemo(
+    () => (matches ?? []).filter((m) => m.status === "LIVE").length,
+    [matches]
+  );
+
   const filtered = useMemo(() => {
     let list = matches ?? [];
     if (filter === "OPEN") {
       list = list.filter((m) => !m.locked);
+    } else if (filter === "LIVE") {
+      list = list.filter((m) => m.status === "LIVE");
     } else {
       list = list.filter((m) => m.phase === filter);
     }
@@ -88,6 +95,15 @@ export default function Matches() {
         <Chip active={filter === "OPEN"} onClick={() => setFilter("OPEN")}>
           Otwarte
         </Chip>
+        {liveCount > 0 ? (
+          <Chip active={filter === "LIVE"} onClick={() => setFilter("LIVE")}>
+            <span className="relative mr-1.5 inline-flex h-2 w-2 align-middle">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-destructive opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-destructive" />
+            </span>
+            Na żywo ({liveCount})
+          </Chip>
+        ) : null}
         {availablePhases.map((p) => (
           <Chip key={p} active={filter === p} onClick={() => setFilter(p)}>
             {PHASE_LABELS[p]}
