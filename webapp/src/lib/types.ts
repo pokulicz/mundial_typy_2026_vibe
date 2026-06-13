@@ -52,6 +52,7 @@ export interface MatchDTO {
   settledAt: string | null;
   dataSource: string;
   locked: boolean;
+  status: "UPCOMING" | "LIVE" | "AWAITING" | "FINISHED";
 }
 
 export interface PredictionDTO {

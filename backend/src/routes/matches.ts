@@ -8,8 +8,9 @@ import {
   ImportScheduleSchema,
 } from "../types";
 import { requireUser, requireAdmin, HttpError, type AppVariables } from "../auth";
-import { toMatchDTO } from "../helpers";
+import { toMatchDTO, computeSettlement } from "../helpers";
 import { WORLD_CUP_2026 } from "../data/worldcup2026";
+import { fetchGroupResults } from "../data/wikiResults";
 
 const matchesRouter = new Hono<{ Variables: AppVariables }>();
 
@@ -164,6 +165,7 @@ matchesRouter.post("/import-worldcup-2026", async (c) => {
   }
   if (replaceAll) await prisma.match.deleteMany({});
   for (const m of WORLD_CUP_2026) {
+    const hasResult = m.homeScore != null && m.awayScore != null;
     await prisma.match.create({
       data: {
         tournament: "FIFA World Cup 2026",
@@ -177,11 +179,70 @@ matchesRouter.post("/import-worldcup-2026", async (c) => {
         kickoff: new Date(m.kickoff),
         venue: m.venue ?? null,
         city: m.city ?? null,
+        homeScore: hasResult ? m.homeScore : null,
+        awayScore: hasResult ? m.awayScore : null,
+        finished: hasResult,
         dataSource: "import",
       },
     });
   }
   return c.json({ data: { created: WORLD_CUP_2026.length, replaced: replaceAll } });
+});
+
+// Auto-fetch group-stage results from Wikipedia and apply them.
+// For each newly-resulted match: save score, mark finished, and settle (idempotent).
+matchesRouter.post("/refresh-results", async (c) => {
+  requireAdmin(c);
+  let results;
+  try {
+    results = await fetchGroupResults();
+  } catch (e) {
+    throw new HttpError(502, "Nie udało się pobrać wyników z internetu", "FETCH_FAILED");
+  }
+
+  const matches = await prisma.match.findMany({ where: { phase: "GROUP" } });
+  // index by group|home|away (ISO codes)
+  const key = (g: string | null, h: string | null, a: string | null) =>
+    `${g ?? ""}|${h ?? ""}|${a ?? ""}`;
+  const byKey = new Map(matches.map((m) => [key(m.groupName, m.homeCode, m.awayCode), m]));
+
+  let updated = 0;
+  let settled = 0;
+  for (const r of results) {
+    const match = byKey.get(key(r.groupName, r.homeCode, r.awayCode));
+    if (!match) continue;
+    const changed =
+      match.homeScore !== r.homeScore || match.awayScore !== r.awayScore || !match.finished;
+    if (!changed) continue;
+
+    await prisma.match.update({
+      where: { id: match.id },
+      data: { homeScore: r.homeScore, awayScore: r.awayScore, finished: true, dataSource: "wikipedia" },
+    });
+    updated++;
+
+    // settle (idempotent) so ranking updates immediately
+    const predictions = await prisma.prediction.findMany({
+      where: { matchId: match.id },
+      include: { user: true },
+    });
+    const scored = computeSettlement(r.homeScore, r.awayScore, predictions);
+    await prisma.$transaction([
+      prisma.pointEntry.deleteMany({ where: { matchId: match.id } }),
+      ...scored.map((s) =>
+        prisma.pointEntry.create({
+          data: { matchId: match.id, userId: s.userId, hit: s.hit, points: s.points },
+        })
+      ),
+      prisma.match.update({
+        where: { id: match.id },
+        data: { settled: true, settledAt: new Date() },
+      }),
+    ]);
+    settled++;
+  }
+
+  return c.json({ data: { fetched: results.length, updated, settled } });
 });
 
 export { matchesRouter };

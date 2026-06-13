@@ -1,2 +1,3 @@
 [2026-06-13] Mundial Typy 2026 — pełna aplikacja: logowanie username+PIN, role, terminarz MŚ2026 (104 mecze), typowanie z blokadą serwerową, rozliczanie pulą 5pkt (idempotentne), ranking, panel admina, PWA, dark UI.
 - Changes made by agent 2026-06-13T21:10:22Z
+- Changes made by agent 2026-06-13T21:41:19Z

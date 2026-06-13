@@ -9,6 +9,7 @@ import {
   Pencil,
   Calculator,
   RotateCcw,
+  RefreshCw,
 } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { AdminLayout } from "@/components/AdminLayout";
@@ -49,6 +50,21 @@ import { toast } from "sonner";
 export default function AdminMatches() {
   const { data: matches, isPending } = useMatches();
   const [filter, setFilter] = useState<"ALL" | Phase>("ALL");
+  const invalidate = useInvalidateAll();
+
+  const refresh = useMutation({
+    mutationFn: () => api.post("/api/matches/refresh-results", {}),
+    onSuccess: (data: unknown) => {
+      const d = data as { fetched: number; updated: number; settled: number };
+      if (d.updated > 0) {
+        toast.success(`Zaktualizowano ${d.updated} wyników i rozliczono ${d.settled} meczów`);
+      } else {
+        toast.success(`Brak nowych wyników (sprawdzono ${d.fetched}).`);
+      }
+      invalidate();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   const phases = useMemo(() => {
     const set = new Set<Phase>();
@@ -61,6 +77,28 @@ export default function AdminMatches() {
   return (
     <AdminLayout title="Mecze" description="Import terminarza, wyniki i rozliczenia.">
       <ImportBar hasMatches={(matches ?? []).length > 0} />
+
+      <div className="mt-3 flex flex-col gap-3 rounded-2xl border border-success/30 bg-success/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-success/15 text-success">
+            <RefreshCw className="h-5 w-5" />
+          </div>
+          <div>
+            <div className="font-bold">Automatyczne wyniki</div>
+            <div className="text-xs text-muted-foreground">
+              Pobiera wyniki rozegranych meczów grupowych z internetu i rozlicza je automatycznie.
+            </div>
+          </div>
+        </div>
+        <Button
+          onClick={() => refresh.mutate()}
+          disabled={refresh.isPending}
+          className="bg-success text-success-foreground hover:bg-success/90"
+        >
+          <RefreshCw className={cn("mr-2 h-4 w-4", refresh.isPending && "animate-spin")} />
+          {refresh.isPending ? "Pobieranie..." : "Aktualizuj wyniki"}
+        </Button>
+      </div>
 
       {(matches ?? []).length > 0 ? (
         <div className="no-scrollbar -mx-4 mb-4 mt-5 flex gap-2 overflow-x-auto px-4">

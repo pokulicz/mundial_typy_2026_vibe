@@ -92,6 +92,11 @@ export default function MatchDetail() {
             <h2 className="mb-2 flex items-center gap-2 px-1 text-sm font-bold uppercase tracking-wide text-muted-foreground">
               {locked ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
               Typy graczy
+              {locked && (predictions ?? []).length > 0 ? (
+                <span className="rounded bg-secondary px-1.5 py-0.5 text-[11px] font-bold text-foreground">
+                  {(predictions ?? []).length}
+                </span>
+              ) : null}
             </h2>
             {!locked ? (
               <div className="glass-card flex items-center gap-3 rounded-xl p-4 text-sm text-muted-foreground">

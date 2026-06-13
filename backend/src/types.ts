@@ -81,6 +81,7 @@ export const MatchSchema = z.object({
   dataSource: z.string(),
   // derived
   locked: z.boolean(), // typing closed (started / override / finished)
+  status: z.enum(["UPCOMING", "LIVE", "AWAITING", "FINISHED"]),
 });
 export type MatchDTO = z.infer<typeof MatchSchema>;
 

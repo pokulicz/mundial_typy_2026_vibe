@@ -54,10 +54,16 @@ backend/   — Hono + Bun + Prisma (SQLite) (API + logika + baza)
 
 ## Terminarz Mundialu 2026
 
-Administrator importuje pełny terminarz jednym kliknięciem (panel → Mecze → „Importuj terminarz”):
-faza grupowa (12 grup × 6 meczów) + drabinka pucharowa (1/16 → finał) = **104 mecze**.
-Drużyny i terminy to edytowalna baza startowa — każdy mecz można poprawić w panelu, a wyniki
-knockoutów uzupełnić, gdy będą znane. Możliwy też import własny z **CSV/JSON**.
+Terminarz oparty jest na **prawdziwych danych** Mundialu 2026 (losowanie z 5.12.2025):
+12 grup × 6 meczów + pełna drabinka pucharowa (1/16 → finał) = **104 mecze**, z prawdziwymi
+drużynami, datami, godzinami i stadionami. Drużyny fazy pucharowej są oznaczone jako „Zwycięzca gr. X"
+/ „2. miejsce gr. Y" do czasu rozstrzygnięcia grup. Możliwy też import własny z **CSV/JSON**.
+
+**Automatyczne wyniki:** przycisk „Aktualizuj wyniki" (panel → Mecze) pobiera wyniki rozegranych
+meczów grupowych z internetu (Wikipedia, bez kluczy API), zapisuje je, oznacza mecze jako zakończone
+i automatycznie je rozlicza. Działa idempotentnie. Wpis ręczny pozostaje jako opcja zapasowa.
+
+**Status meczu** liczony po stronie serwera: nadchodzący → **NA ŻYWO** → czeka na wynik → zakończony.
 
 ## Co dalej (gotowe pod rozbudowę)
 

@@ -8,6 +8,19 @@ export function isLocked(match: Match, now: Date = new Date()): boolean {
   return now.getTime() >= match.kickoff.getTime();
 }
 
+const LIVE_WINDOW_MS = 150 * 60 * 1000; // ~2.5h: assume a match is "live" within this window
+
+// Derived match status for display.
+export type MatchStatus = "UPCOMING" | "LIVE" | "AWAITING" | "FINISHED";
+export function matchStatus(match: Match, now: Date = new Date()): MatchStatus {
+  if (match.finished || (match.homeScore !== null && match.awayScore !== null)) return "FINISHED";
+  const start = match.kickoff.getTime();
+  const t = now.getTime();
+  if (t < start) return "UPCOMING";
+  if (t - start < LIVE_WINDOW_MS) return "LIVE";
+  return "AWAITING"; // started long ago but no result entered yet
+}
+
 export function toMatchDTO(match: Match, now: Date = new Date()): MatchDTO {
   return {
     id: match.id,
@@ -30,6 +43,7 @@ export function toMatchDTO(match: Match, now: Date = new Date()): MatchDTO {
     settledAt: match.settledAt ? match.settledAt.toISOString() : null,
     dataSource: match.dataSource,
     locked: isLocked(match, now),
+    status: matchStatus(match, now),
   };
 }
 

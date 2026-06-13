@@ -157,6 +157,17 @@ function TeamSide({
 }
 
 function StatusPill({ match }: { match: MatchDTO }) {
+  if (match.status === "LIVE") {
+    return (
+      <span className="flex items-center gap-1.5 rounded-md bg-destructive/15 px-2 py-0.5 font-bold text-destructive">
+        <span className="relative flex h-2 w-2">
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-destructive opacity-75" />
+          <span className="relative inline-flex h-2 w-2 rounded-full bg-destructive" />
+        </span>
+        NA ŻYWO
+      </span>
+    );
+  }
   if (match.settled) {
     return (
       <span className="flex items-center gap-1 rounded-md bg-success/15 px-2 py-0.5 font-semibold text-success">
@@ -164,10 +175,17 @@ function StatusPill({ match }: { match: MatchDTO }) {
       </span>
     );
   }
-  if (match.finished) {
+  if (match.status === "FINISHED") {
     return (
       <span className="rounded-md bg-warning/15 px-2 py-0.5 font-semibold text-warning">
         Zakończony
+      </span>
+    );
+  }
+  if (match.status === "AWAITING") {
+    return (
+      <span className="flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 font-semibold text-muted-foreground">
+        <Lock className="h-3 w-3" /> Czeka na wynik
       </span>
     );
   }
