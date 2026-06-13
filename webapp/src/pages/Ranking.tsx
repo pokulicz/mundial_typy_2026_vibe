@@ -16,7 +16,7 @@ export default function Ranking() {
       <div className="mb-5">
         <h1 className="font-display text-2xl tracking-tight md:text-3xl">Ranking ligi</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Liczy się tylko dokładny wynik. Trafiacze dzielą pulę przegranych.
+          Liczy się tylko dokładny wynik. Poprawnie typujący dzielą pulę przegranych.
         </p>
       </div>
 
@@ -40,8 +40,8 @@ export default function Ranking() {
 
       <div className="mt-6 rounded-xl border border-border/60 bg-card/40 p-4 text-xs leading-relaxed text-muted-foreground">
         <p className="mb-1 font-semibold text-foreground">Jak liczone są punkty?</p>
-        Każdy mecz to pula po 5 pkt od typujących. Jeśli ktoś trafi dokładny wynik —
-        przegrani tracą po 5 pkt, a trafiacze dzielą się ich pulą. Jeśli nikt nie trafi,
+        Każdy mecz to pula po 2 pkt od typujących. Jeśli ktoś trafi dokładny wynik —
+        przegrani tracą po 2 pkt, a poprawnie typujący dzielą się ich pulą. Jeśli nikt nie trafi,
         nikt nie zyskuje ani nie traci.
       </div>
     </Layout>

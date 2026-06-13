@@ -91,7 +91,7 @@ export default function MatchDetail() {
           <section>
             <h2 className="mb-2 flex items-center gap-2 px-1 text-sm font-bold uppercase tracking-wide text-muted-foreground">
               {locked ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-              Poprawnie typujący
+              Typy pozostałych graczy
               {locked && (allPredictions ?? []).length > 0 ? (
                 <span className="rounded bg-secondary px-1.5 py-0.5 text-[11px] font-bold text-foreground">
                   {(allPredictions ?? []).length}
@@ -115,10 +115,20 @@ export default function MatchDetail() {
                     p.homeScore === match.homeScore &&
                     p.awayScore === match.awayScore;
                   return (
-                    <div key={p.id} className="flex items-center justify-between px-4 py-2.5">
+                    <div
+                      key={p.id}
+                      className={cn(
+                        "flex items-center justify-between px-4 py-2.5 transition-colors",
+                        isHit && "bg-success/10"
+                      )}
+                    >
                       <span className="flex items-center gap-2 text-sm font-semibold">
                         {p.username}
-                        {isHit ? <CircleCheck className="h-4 w-4 text-success" /> : null}
+                        {isHit ? (
+                          <span className="flex items-center gap-1 rounded bg-success/20 px-1.5 py-0.5 text-[11px] font-bold text-success">
+                            <CircleCheck className="h-3 w-3" /> Trafiony
+                          </span>
+                        ) : null}
                       </span>
                       <span
                         className={cn(
