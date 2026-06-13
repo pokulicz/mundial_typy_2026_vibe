@@ -223,15 +223,27 @@ function LockedScore({
   myPrediction: PredictionDTO | null;
 }) {
   const hasResult = match.homeScore !== null && match.awayScore !== null;
+  const isLive = match.status === "LIVE";
+
   return (
     <div className="flex flex-col items-center">
       <div className="font-score text-3xl font-bold">
-        {hasResult ? `${match.homeScore} : ${match.awayScore}` : "– : –"}
+        {hasResult ? (
+          `${match.homeScore} : ${match.awayScore}`
+        ) : isLive ? (
+          <span className="text-lg animate-pulse">● ● ●</span>
+        ) : (
+          "– : –"
+        )}
       </div>
       <div className="mt-1 text-[10px] uppercase tracking-wide text-muted-foreground">
-        {myPrediction
-          ? `Twój typ ${myPrediction.homeScore}:${myPrediction.awayScore}`
-          : "Brak typu"}
+        {hasResult ? (
+          myPrediction ? `Twój typ ${myPrediction.homeScore}:${myPrediction.awayScore}` : "Brak typu"
+        ) : isLive ? (
+          "Mecz w trakcie"
+        ) : (
+          myPrediction ? `Twój typ ${myPrediction.homeScore}:${myPrediction.awayScore}` : "Brak typu"
+        )}
       </div>
     </div>
   );
