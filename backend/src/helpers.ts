@@ -14,11 +14,16 @@ const POOL_PER_MATCH = 2; // punkty za każdego typującego
 // Derived match status for display.
 export type MatchStatus = "UPCOMING" | "LIVE" | "AWAITING" | "FINISHED";
 export function matchStatus(match: Match, now: Date = new Date()): MatchStatus {
-  if (match.finished) return "FINISHED";
   const start = match.kickoff.getTime();
   const t = now.getTime();
+
+  // Check timing window first (LIVE takes precedence over finished flag)
   if (t < start) return "UPCOMING";
   if (t - start < LIVE_WINDOW_MS) return "LIVE";
+
+  // Then check if finished
+  if (match.finished) return "FINISHED";
+
   return "AWAITING"; // started long ago but no result entered yet
 }
 
