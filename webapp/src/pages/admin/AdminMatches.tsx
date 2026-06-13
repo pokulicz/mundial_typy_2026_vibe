@@ -371,7 +371,12 @@ function AdminMatchRow({ match }: { match: MatchDTO }) {
   const invalidate = useInvalidateAll();
   const [home, setHome] = useState<string>(match.homeScore?.toString() ?? "");
   const [away, setAway] = useState<string>(match.awayScore?.toString() ?? "");
-  const [markFinished, setMarkFinished] = useState(match.finished || false);
+  const [markFinished, setMarkFinished] = useState(() => {
+    // For LIVE matches, default to false (keep it live)
+    if (match.status === "LIVE") return false;
+    // For finished matches, use their current state
+    return match.finished || false;
+  });
 
   const saveResult = useMutation({
     mutationFn: () =>
