@@ -11,24 +11,20 @@ rankingRouter.get("/", async (c) => {
 
   const users = await prisma.user.findMany();
   const points = await prisma.pointEntry.findMany();
-  const predCounts = await prisma.prediction.groupBy({
-    by: ["userId"],
-    _count: { _all: true },
-  });
-
-  const predMap = new Map(predCounts.map((p) => [p.userId, p._count._all]));
 
   const rows: Omit<RankRow, "rank">[] = users.map((u) => {
     const mine = points.filter((p) => p.userId === u.id);
     const balance = mine.reduce((sum, p) => sum + p.points, 0);
     const hits = mine.filter((p) => p.hit).length;
+    const settledMatches = new Set(mine.map((p) => p.matchId)).size; // unique matches
+    const mistakes = mine.length - hits; // points entries that are not hits
     return {
       userId: u.id,
       username: u.username,
       balance: Math.round(balance * 100) / 100,
       hits,
-      predictions: predMap.get(u.id) ?? 0,
-      settledMatches: mine.length,
+      predictions: hits + mistakes, // total settled predictions
+      settledMatches,
     };
   });
 

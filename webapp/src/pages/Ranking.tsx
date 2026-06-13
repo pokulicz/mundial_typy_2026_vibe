@@ -8,8 +8,8 @@ import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 
 function calculateStats(row: RankRow) {
-  const mistakes = row.predictions - row.hits;
-  const accuracy = row.predictions > 0 ? Math.round((row.hits / row.predictions) * 100) : 0;
+  const mistakes = row.settledMatches - row.hits;
+  const accuracy = row.settledMatches > 0 ? Math.round((row.hits / row.settledMatches) * 100) : 0;
   const avgPerMatch = row.settledMatches > 0 ? (row.balance / row.settledMatches).toFixed(1) : "0.0";
   return { mistakes, accuracy, avgPerMatch };
 }
