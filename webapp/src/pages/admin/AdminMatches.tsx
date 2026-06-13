@@ -371,13 +371,14 @@ function AdminMatchRow({ match }: { match: MatchDTO }) {
   const invalidate = useInvalidateAll();
   const [home, setHome] = useState<string>(match.homeScore?.toString() ?? "");
   const [away, setAway] = useState<string>(match.awayScore?.toString() ?? "");
+  const [markFinished, setMarkFinished] = useState(match.finished || false);
 
   const saveResult = useMutation({
     mutationFn: () =>
       api.put(`/api/matches/${match.id}/result`, {
         homeScore: Number(home),
         awayScore: Number(away),
-        finished: true,
+        finished: markFinished,
       }),
     onSuccess: () => {
       toast.success("Wynik zapisany");
@@ -467,6 +468,24 @@ function AdminMatchRow({ match }: { match: MatchDTO }) {
           <span className="truncate text-sm font-bold">{match.awayTeam}</span>
         </div>
       </div>
+
+      {/* Mark as finished checkbox */}
+      {(home !== "" || away !== "") && !match.finished ? (
+        <div className="mt-2 flex items-center gap-2 border-t border-border/50 pt-3">
+          <label className="flex items-center gap-2 text-xs">
+            <input
+              type="checkbox"
+              checked={markFinished}
+              onChange={(e) => setMarkFinished(e.target.checked)}
+              className="h-4 w-4 accent-primary rounded"
+            />
+            <span className="font-semibold">Mecz skończony</span>
+          </label>
+          <span className="text-[10px] text-muted-foreground">
+            {match.status === "LIVE" ? "(Wyłącz dla meczów NA ŻYWO)" : ""}
+          </span>
+        </div>
+      ) : null}
 
       {/* status + actions */}
       <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border/50 pt-3">
