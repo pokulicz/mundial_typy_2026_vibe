@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
-type FilterKey = Phase;
+type FilterKey = "OPEN" | Phase;
 
 export default function Matches() {
   const { data: matches, isPending } = useMatches();
@@ -25,10 +25,7 @@ export default function Matches() {
     return PHASE_ORDER.filter((p) => set.has(p));
   }, [matches]);
 
-  const [filter, setFilter] = useState<FilterKey>(() => {
-    const firstPhase = availablePhases[0];
-    return firstPhase || "GROUP";
-  });
+  const [filter, setFilter] = useState<FilterKey>("OPEN");
 
   const predMap = useMemo(() => {
     const m = new Map<string, PredictionDTO>();
@@ -38,35 +35,65 @@ export default function Matches() {
 
   const filtered = useMemo(() => {
     let list = matches ?? [];
-    list = list.filter((m) => m.phase === filter);
+    if (filter === "OPEN") {
+      list = list.filter((m) => !m.locked);
+    } else {
+      list = list.filter((m) => m.phase === filter);
+    }
     return list;
   }, [matches, filter]);
 
-  // group by day
+  // group by phase, then by day
   const groups = useMemo(() => {
-    const map = new Map<string, { label: string; iso: string; items: MatchDTO[] }>();
+    const phaseMap = new Map<Phase, Map<string, { label: string; iso: string; items: MatchDTO[] }>>();
+
     for (const m of filtered) {
+      if (!phaseMap.has(m.phase)) {
+        phaseMap.set(m.phase, new Map());
+      }
+      const dayMap = phaseMap.get(m.phase)!;
       const k = dayKey(m.kickoff);
-      if (!map.has(k)) map.set(k, { label: formatDay(m.kickoff), iso: m.kickoff, items: [] });
-      map.get(k)!.items.push(m);
+      if (!dayMap.has(k)) {
+        dayMap.set(k, { label: formatDay(m.kickoff), iso: m.kickoff, items: [] });
+      }
+      dayMap.get(k)!.items.push(m);
     }
-    return Array.from(map.values());
-  }, [filtered]);
+
+    const result: Array<{
+      phase: Phase;
+      phaseLabel: string;
+      days: Array<{ label: string; iso: string; items: MatchDTO[] }>;
+    }> = [];
+
+    availablePhases.forEach((phase) => {
+      const dayMap = phaseMap.get(phase);
+      if (dayMap) {
+        result.push({
+          phase,
+          phaseLabel: PHASE_LABELS[phase],
+          days: Array.from(dayMap.values()),
+        });
+      }
+    });
+
+    return result;
+  }, [filtered, availablePhases]);
 
   return (
     <Layout>
       <PageHeader />
 
       {/* Filter rail */}
-      {availablePhases.length > 0 ? (
-        <div className="no-scrollbar -mx-4 mb-5 flex gap-2 overflow-x-auto px-4 pb-1">
-          {availablePhases.map((p) => (
-            <Chip key={p} active={filter === p} onClick={() => setFilter(p)}>
-              {PHASE_LABELS[p]}
-            </Chip>
-          ))}
-        </div>
-      ) : null}
+      <div className="no-scrollbar -mx-4 mb-5 flex gap-2 overflow-x-auto px-4 pb-1">
+        <Chip active={filter === "OPEN"} onClick={() => setFilter("OPEN")}>
+          Otwarte
+        </Chip>
+        {availablePhases.map((p) => (
+          <Chip key={p} active={filter === p} onClick={() => setFilter(p)}>
+            {PHASE_LABELS[p]}
+          </Chip>
+        ))}
+      </div>
 
       {isPending ? (
         <div className="space-y-3">
@@ -79,16 +106,25 @@ export default function Matches() {
       ) : groups.length === 0 ? (
         <NoMatchesForFilter />
       ) : (
-        <div className="space-y-6">
-          {groups.map((g) => (
-            <section key={g.iso}>
-              <h2 className="mb-2.5 flex items-center gap-2 px-1 text-sm font-bold uppercase tracking-wide text-muted-foreground">
-                <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-                {g.label}
+        <div className="space-y-8">
+          {groups.map((phaseGroup) => (
+            <section key={phaseGroup.phase}>
+              <h2 className="mb-4 text-lg font-bold uppercase tracking-wide text-foreground">
+                {phaseGroup.phaseLabel}
               </h2>
-              <div className="space-y-3">
-                {g.items.map((m) => (
-                  <MatchCard key={m.id} match={m} myPrediction={predMap.get(m.id) ?? null} />
+              <div className="space-y-6 ml-2">
+                {phaseGroup.days.map((dayGroup) => (
+                  <div key={dayGroup.iso}>
+                    <h3 className="mb-2.5 flex items-center gap-2 px-1 text-sm font-bold uppercase tracking-wide text-muted-foreground">
+                      <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                      {dayGroup.label}
+                    </h3>
+                    <div className="space-y-3">
+                      {dayGroup.items.map((m) => (
+                        <MatchCard key={m.id} match={m} myPrediction={predMap.get(m.id) ?? null} />
+                      ))}
+                    </div>
+                  </div>
                 ))}
               </div>
             </section>
