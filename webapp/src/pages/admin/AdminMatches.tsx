@@ -421,6 +421,15 @@ function AdminMatchRow({ match }: { match: MatchDTO }) {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const resetToLive = useMutation({
+    mutationFn: () => api.patch(`/api/matches/${match.id}`, { finished: false }),
+    onSuccess: () => {
+      toast.success("Mecz przywrócony na żywo");
+      invalidate();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const remove = useMutation({
     mutationFn: () => api.delete(`/api/matches/${match.id}`),
     onSuccess: () => {
@@ -528,6 +537,19 @@ function AdminMatchRow({ match }: { match: MatchDTO }) {
           {match.settled ? (
             <Button size="sm" className="h-8" variant="secondary" onClick={() => settle.mutate()} disabled={settle.isPending}>
               <RotateCcw className="mr-1 h-3.5 w-3.5" /> Przelicz
+            </Button>
+          ) : null}
+
+          {match.finished && match.status !== "LIVE" ? (
+            <Button
+              size="sm"
+              className="h-8 text-warning hover:text-warning"
+              variant="ghost"
+              onClick={() => resetToLive.mutate()}
+              disabled={resetToLive.isPending}
+              title="Przywróć mecz na żywo (jeśli jest w trakcie)"
+            >
+              Przywróć na żywo
             </Button>
           ) : null}
 
