@@ -45,4 +45,29 @@ authRouter.get("/me", async (c) => {
   return c.json({ data: user });
 });
 
+authRouter.patch(
+  "/me",
+  zValidator("json", LoginSchema),
+  async (c) => {
+    const user = requireUser(c);
+    const { username, pin } = c.req.valid("json");
+
+    const pinHash = await Bun.password.hash(pin);
+    const updated = await prisma.user.update({
+      where: { id: user.id },
+      data: { username, pinHash },
+    });
+
+    return c.json({
+      data: {
+        id: updated.id,
+        username: updated.username,
+        role: updated.role,
+        active: updated.active,
+        createdAt: updated.createdAt.toISOString(),
+      },
+    });
+  }
+);
+
 export { authRouter };

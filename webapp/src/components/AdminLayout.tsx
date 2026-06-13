@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Users, CalendarCog, ClipboardList, Trophy } from "lucide-react";
+import { Users, CalendarCog, ClipboardList, Trophy, Settings } from "lucide-react";
 import { Layout } from "./Layout";
 import { cn } from "@/lib/utils";
 
@@ -8,6 +8,7 @@ const tabs = [
   { to: "/admin/mecze", label: "Mecze", icon: CalendarCog },
   { to: "/admin/typy", label: "Typy", icon: ClipboardList },
   { to: "/admin/ranking", label: "Ranking", icon: Trophy },
+  { to: "/admin/profil", label: "Mój profil", icon: Settings },
 ];
 
 export function AdminLayout({

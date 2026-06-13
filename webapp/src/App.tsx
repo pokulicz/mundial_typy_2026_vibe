@@ -14,6 +14,7 @@ import AdminUsers from "./pages/admin/AdminUsers";
 import AdminMatches from "./pages/admin/AdminMatches";
 import AdminPredictions from "./pages/admin/AdminPredictions";
 import AdminRanking from "./pages/admin/AdminRanking";
+import AdminProfile from "./pages/admin/AdminProfile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -108,6 +109,14 @@ const App = () => (
             element={
               <AdminRoute>
                 <AdminRanking />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/profil"
+            element={
+              <AdminRoute>
+                <AdminProfile />
               </AdminRoute>
             }
           />
