@@ -8,8 +8,8 @@ Gracze typują wyniki, walczą o pulę punktów, a ranking aktualizuje się po k
 - Liczy się **tylko dokładny wynik** (np. typ 2:1 i wynik 2:1 = trafienie).
 - Każdy mecz to pula po **5 pkt** od każdego typującego.
 - Jeśli **nikt** nie trafi dokładnego wyniku — nikt nie zyskuje ani nie traci.
-- Jeśli ktoś trafi — **przegrani tracą po 5 pkt**, a **trafiacze dzielą pulę przegranych**:
-  `wygrana = ((liczba_typujących − liczba_trafień) × 5) / liczba_trafień`
+- Jeśli ktoś trafi — **przegrani tracą po 2 pkt**, a **poprawnie typujący dzielą pulę przegranych**:
+  `wygrana = ((liczba_typujących − liczba_poprawnie_typujących) × 2) / liczba_poprawnie_typujących`
 - W puli meczu biorą udział tylko gracze, którzy oddali typ na ten mecz.
 
 ## Role

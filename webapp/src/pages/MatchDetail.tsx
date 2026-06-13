@@ -26,7 +26,7 @@ export default function MatchDetail() {
   );
 
   const locked = match?.locked ?? false;
-  const { data: predictions } = useMatchPredictions(id, locked);
+  const { data: allPredictions } = useMatchPredictions(id, locked);
   const { data: settlement } = useSettlement(id, match?.settled ?? false);
 
   return (
@@ -91,10 +91,10 @@ export default function MatchDetail() {
           <section>
             <h2 className="mb-2 flex items-center gap-2 px-1 text-sm font-bold uppercase tracking-wide text-muted-foreground">
               {locked ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-              Typy graczy
-              {locked && (predictions ?? []).length > 0 ? (
+              Poprawnie typujący
+              {locked && (allPredictions ?? []).length > 0 ? (
                 <span className="rounded bg-secondary px-1.5 py-0.5 text-[11px] font-bold text-foreground">
-                  {(predictions ?? []).length}
+                  {(allPredictions ?? []).length}
                 </span>
               ) : null}
             </h2>
@@ -103,13 +103,13 @@ export default function MatchDetail() {
                 <Lock className="h-4 w-4 shrink-0" />
                 Typy innych graczy zobaczysz dopiero po rozpoczęciu meczu.
               </div>
-            ) : (predictions ?? []).length === 0 ? (
+            ) : (allPredictions ?? []).length === 0 ? (
               <div className="glass-card rounded-xl p-4 text-sm text-muted-foreground">
                 Nikt nie wytypował tego meczu.
               </div>
             ) : (
               <div className="glass-card divide-y divide-border/50 overflow-hidden rounded-xl">
-                {(predictions ?? []).map((p) => {
+                {(allPredictions ?? []).map((p) => {
                   const isHit =
                     match.homeScore !== null &&
                     p.homeScore === match.homeScore &&

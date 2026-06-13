@@ -48,8 +48,17 @@ export function MatchCard({ match, myPrediction }: MatchCardProps) {
     );
   };
 
+  const cardBg =
+    match.status === "LIVE"
+      ? "bg-red-950/20 border-red-500/30"
+      : match.status === "FINISHED"
+        ? "bg-green-950/20 border-green-500/30"
+        : match.locked
+          ? "bg-gray-800/20 border-gray-600/30"
+          : "bg-blue-950/20 border-blue-500/30";
+
   return (
-    <div className="glass-card sheen rounded-2xl p-4 transition-colors hover:border-border">
+    <div className={cn("glass-card sheen rounded-2xl p-4 transition-colors hover:border-border border", cardBg)}>
       {/* header row */}
       <div className="mb-3 flex items-center justify-between gap-2 text-xs">
         <div className="flex items-center gap-2 text-muted-foreground">
@@ -116,7 +125,10 @@ export function MatchCard({ match, myPrediction }: MatchCardProps) {
         ) : (
           <Button
             size="sm"
-            className="h-8 font-semibold"
+            className={cn(
+              "h-8 font-semibold",
+              myPrediction && !dirty && "bg-success text-success-foreground hover:bg-success/90"
+            )}
             disabled={!canSave || submit.isPending}
             onClick={handleSave}
           >

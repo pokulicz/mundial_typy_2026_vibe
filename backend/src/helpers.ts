@@ -9,6 +9,7 @@ export function isLocked(match: Match, now: Date = new Date()): boolean {
 }
 
 const LIVE_WINDOW_MS = 150 * 60 * 1000; // ~2.5h: assume a match is "live" within this window
+const POOL_PER_MATCH = 2; // punkty za każdego typującego
 
 // Derived match status for display.
 export type MatchStatus = "UPCOMING" | "LIVE" | "AWAITING" | "FINISHED";
@@ -59,8 +60,8 @@ export type ScoredEntry = {
 /**
  * Pool scoring: only an EXACT score counts as a hit.
  * - If nobody hits: everyone gets 0.
- * - If some hit: each non-hitter loses 5, hitters split the losers' pool.
- *   win = ((nPlayers - nHits) * 5) / nHits
+ * - If some hit: each non-hitter loses POOL_PER_MATCH, hitters split the losers' pool.
+ *   win = ((nPlayers - nHits) * POOL_PER_MATCH) / nHits
  * Only players who submitted a prediction for this match participate.
  */
 export function computeSettlement(
@@ -78,7 +79,7 @@ export function computeSettlement(
     const hit = p.homeScore === resultHome && p.awayScore === resultAway;
     let points = 0;
     if (nHits > 0) {
-      points = hit ? ((nPlayers - nHits) * 5) / nHits : -5;
+      points = hit ? ((nPlayers - nHits) * POOL_PER_MATCH) / nHits : -POOL_PER_MATCH;
     }
     return {
       userId: p.userId,
