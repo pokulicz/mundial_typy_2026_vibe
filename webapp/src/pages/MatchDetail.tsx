@@ -114,30 +114,50 @@ export default function MatchDetail() {
                     match.homeScore !== null &&
                     p.homeScore === match.homeScore &&
                     p.awayScore === match.awayScore;
+
+                  // Calculate potential winnings for this prediction
+                  const sameScorePredictions = (allPredictions ?? []).filter(
+                    (pred) => pred.homeScore === p.homeScore && pred.awayScore === p.awayScore
+                  ).length;
+                  const totalPredictions = allPredictions?.length ?? 0;
+                  const potentialWin =
+                    sameScorePredictions > 0
+                      ? Math.round(
+                          (((totalPredictions - sameScorePredictions) * 2) /
+                            sameScorePredictions) *
+                            100
+                        ) / 100
+                      : 0;
+
                   return (
                     <div
                       key={p.id}
                       className={cn(
-                        "flex items-center justify-between px-4 py-2.5 transition-colors",
+                        "flex flex-col gap-1 px-4 py-2.5 transition-colors",
                         isHit && "bg-success/10"
                       )}
                     >
-                      <span className="flex items-center gap-2 text-sm font-semibold">
-                        {p.username}
-                        {isHit ? (
-                          <span className="flex items-center gap-1 rounded bg-success/20 px-1.5 py-0.5 text-[11px] font-bold text-success">
-                            <CircleCheck className="h-3 w-3" /> Trafiony
-                          </span>
-                        ) : null}
-                      </span>
-                      <span
-                        className={cn(
-                          "font-score text-base font-bold",
-                          isHit ? "text-success" : "text-foreground"
-                        )}
-                      >
-                        {p.homeScore}:{p.awayScore}
-                      </span>
+                      <div className="flex items-center justify-between">
+                        <span className="flex items-center gap-2 text-sm font-semibold">
+                          {p.username}
+                          {isHit ? (
+                            <span className="flex items-center gap-1 rounded bg-success/20 px-1.5 py-0.5 text-[11px] font-bold text-success">
+                              <CircleCheck className="h-3 w-3" /> Trafiony
+                            </span>
+                          ) : null}
+                        </span>
+                        <span
+                          className={cn(
+                            "font-score text-base font-bold",
+                            isHit ? "text-success" : "text-foreground"
+                          )}
+                        >
+                          {p.homeScore}:{p.awayScore}
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-muted-foreground">
+                        Jeśli trafi: <span className="font-semibold text-primary">+{potentialWin} pkt</span>
+                      </div>
                     </div>
                   );
                 })}
