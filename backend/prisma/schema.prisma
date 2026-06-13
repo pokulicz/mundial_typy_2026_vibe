@@ -1,0 +1,113 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ---------- Users & sessions (username + PIN auth) ----------
+
+model User {
+  id          String   @id @default(cuid())
+  username    String   @unique
+  pinHash     String
+  role        String   @default("PLAYER") // "ADMIN" | "PLAYER"
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  sessions    Session[]
+  predictions Prediction[]
+  points      PointEntry[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+// ---------- Matches ----------
+
+model Match {
+  id           String   @id @default(cuid())
+  tournament   String   @default("FIFA World Cup 2026")
+  phase        String                         // GROUP, R32, R16, QF, SF, THIRD, FINAL
+  groupName    String?                        // "A".."L" for group stage
+  matchNo      Int?                           // official match number for ordering
+  homeTeam     String
+  awayTeam     String
+  homeCode     String?                        // ISO2 for flag (e.g. "pl")
+  awayCode     String?
+  kickoff      DateTime                       // start time (UTC)
+  venue        String?
+  city         String?
+
+  homeScore    Int?
+  awayScore    Int?
+
+  lockOverride Boolean  @default(false)       // admin manual lock
+  finished     Boolean  @default(false)
+  settled      Boolean  @default(false)
+  settledAt    DateTime?
+  dataSource   String   @default("import")    // import | csv | json | manual | api
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  predictions  Prediction[]
+  points       PointEntry[]
+
+  @@index([kickoff])
+  @@index([phase])
+}
+
+// ---------- Predictions (one per user per match) ----------
+
+model Prediction {
+  id        String   @id @default(cuid())
+  userId    String
+  matchId   String
+  homeScore Int
+  awayScore Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, matchId])
+  @@index([matchId])
+}
+
+// ---------- Settlement results (idempotent per match+user) ----------
+
+model PointEntry {
+  id        String   @id @default(cuid())
+  matchId   String
+  userId    String
+  hit       Boolean  @default(false)
+  points    Float    @default(0)
+  createdAt DateTime @default(now())
+
+  match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([matchId, userId])
+  @@index([userId])
+}
+
+// ---------- App settings (future config) ----------
+
+model AppSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
