@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import {
   Download,
   Upload,
@@ -50,6 +50,8 @@ import { toast } from "sonner";
 export default function AdminMatches() {
   const { data: matches, isPending } = useMatches();
   const [filter, setFilter] = useState<"ALL" | Phase>("ALL");
+  const [autoRefreshInterval, setAutoRefreshInterval] = useState<5 | 10 | 15>(5); // minutes
+  const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(false);
   const invalidate = useInvalidateAll();
 
   const refresh = useMutation({
@@ -66,6 +68,16 @@ export default function AdminMatches() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  // Auto-refresh effect
+  useEffect(() => {
+    if (!autoRefreshEnabled) return;
+    const intervalMs = autoRefreshInterval * 60 * 1000;
+    const timer = setInterval(() => {
+      refresh.mutate();
+    }, intervalMs);
+    return () => clearInterval(timer);
+  }, [autoRefreshEnabled, autoRefreshInterval, refresh]);
+
   const phases = useMemo(() => {
     const set = new Set<Phase>();
     (matches ?? []).forEach((m) => set.add(m.phase));
@@ -78,26 +90,54 @@ export default function AdminMatches() {
     <AdminLayout title="Mecze" description="Import terminarza, wyniki i rozliczenia.">
       <ImportBar hasMatches={(matches ?? []).length > 0} />
 
-      <div className="mt-3 flex flex-col gap-3 rounded-2xl border border-success/30 bg-success/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mt-3 flex flex-col gap-3 rounded-2xl border border-success/30 bg-success/5 p-4">
         <div className="flex items-start gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-success/15 text-success">
             <RefreshCw className="h-5 w-5" />
           </div>
-          <div>
+          <div className="flex-1">
             <div className="font-bold">Automatyczne wyniki</div>
             <div className="text-xs text-muted-foreground">
               Pobiera wyniki rozegranych meczów grupowych z internetu i rozlicza je automatycznie.
             </div>
           </div>
         </div>
-        <Button
-          onClick={() => refresh.mutate()}
-          disabled={refresh.isPending}
-          className="bg-success text-success-foreground hover:bg-success/90"
-        >
-          <RefreshCw className={cn("mr-2 h-4 w-4", refresh.isPending && "animate-spin")} />
-          {refresh.isPending ? "Pobieranie..." : "Aktualizuj wyniki"}
-        </Button>
+
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+          <Button
+            onClick={() => refresh.mutate()}
+            disabled={refresh.isPending}
+            className="bg-success text-success-foreground hover:bg-success/90"
+          >
+            <RefreshCw className={cn("mr-2 h-4 w-4", refresh.isPending && "animate-spin")} />
+            {refresh.isPending ? "Pobieranie..." : "Pobierz teraz"}
+          </Button>
+
+          <div className="flex items-center gap-2">
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={autoRefreshEnabled}
+                onChange={(e) => setAutoRefreshEnabled(e.target.checked)}
+                className="h-4 w-4 accent-success rounded"
+              />
+              <span className="font-semibold">Automatycznie co</span>
+            </label>
+            <select
+              value={autoRefreshInterval}
+              onChange={(e) => setAutoRefreshInterval(Number(e.target.value) as 5 | 10 | 15)}
+              disabled={!autoRefreshEnabled}
+              className="rounded border border-border bg-card px-2 py-1 text-sm font-semibold disabled:opacity-50"
+            >
+              <option value={5}>5 min</option>
+              <option value={10}>10 min</option>
+              <option value={15}>15 min</option>
+            </select>
+          </div>
+          {autoRefreshEnabled ? (
+            <span className="text-xs font-semibold text-success">● Włączony</span>
+          ) : null}
+        </div>
       </div>
 
       {(matches ?? []).length > 0 ? (
