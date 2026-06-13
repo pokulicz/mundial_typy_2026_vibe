@@ -12,19 +12,12 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
-type FilterKey = "OPEN" | "LIVE" | "RESULTS" | "ALL" | Phase;
+type FilterKey = Phase;
 
 export default function Matches() {
   const { data: matches, isPending } = useMatches();
   const { data: myPreds } = useMyPredictions();
   const { isAdmin } = useAuth();
-  const [filter, setFilter] = useState<FilterKey>("OPEN");
-
-  const predMap = useMemo(() => {
-    const m = new Map<string, PredictionDTO>();
-    (myPreds ?? []).forEach((p) => m.set(p.matchId, p));
-    return m;
-  }, [myPreds]);
 
   const availablePhases = useMemo(() => {
     const set = new Set<Phase>();
@@ -32,20 +25,20 @@ export default function Matches() {
     return PHASE_ORDER.filter((p) => set.has(p));
   }, [matches]);
 
-  const liveCount = useMemo(
-    () => (matches ?? []).filter((m) => m.status === "LIVE").length,
-    [matches]
-  );
+  const [filter, setFilter] = useState<FilterKey>(() => {
+    const firstPhase = availablePhases[0];
+    return firstPhase || "GROUP";
+  });
+
+  const predMap = useMemo(() => {
+    const m = new Map<string, PredictionDTO>();
+    (myPreds ?? []).forEach((p) => m.set(p.matchId, p));
+    return m;
+  }, [myPreds]);
 
   const filtered = useMemo(() => {
     let list = matches ?? [];
-    if (filter === "OPEN") list = list.filter((m) => !m.locked);
-    else if (filter === "LIVE") list = list.filter((m) => m.status === "LIVE");
-    else if (filter === "RESULTS")
-      list = [...list]
-        .filter((m) => m.status === "FINISHED")
-        .sort((a, b) => new Date(b.kickoff).getTime() - new Date(a.kickoff).getTime());
-    else if (filter !== "ALL") list = list.filter((m) => m.phase === filter);
+    list = list.filter((m) => m.phase === filter);
     return list;
   }, [matches, filter]);
 
@@ -65,31 +58,15 @@ export default function Matches() {
       <PageHeader />
 
       {/* Filter rail */}
-      <div className="no-scrollbar -mx-4 mb-5 flex gap-2 overflow-x-auto px-4 pb-1">
-        <Chip active={filter === "OPEN"} onClick={() => setFilter("OPEN")}>
-          Otwarte
-        </Chip>
-        {liveCount > 0 ? (
-          <Chip active={filter === "LIVE"} onClick={() => setFilter("LIVE")}>
-            <span className="relative mr-1.5 inline-flex h-2 w-2 align-middle">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-destructive opacity-75" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-destructive" />
-            </span>
-            Na żywo ({liveCount})
-          </Chip>
-        ) : null}
-        <Chip active={filter === "RESULTS"} onClick={() => setFilter("RESULTS")}>
-          Wyniki
-        </Chip>
-        <Chip active={filter === "ALL"} onClick={() => setFilter("ALL")}>
-          Wszystkie
-        </Chip>
-        {availablePhases.map((p) => (
-          <Chip key={p} active={filter === p} onClick={() => setFilter(p)}>
-            {PHASE_LABELS[p]}
-          </Chip>
-        ))}
-      </div>
+      {availablePhases.length > 0 ? (
+        <div className="no-scrollbar -mx-4 mb-5 flex gap-2 overflow-x-auto px-4 pb-1">
+          {availablePhases.map((p) => (
+            <Chip key={p} active={filter === p} onClick={() => setFilter(p)}>
+              {PHASE_LABELS[p]}
+            </Chip>
+          ))}
+        </div>
+      ) : null}
 
       {isPending ? (
         <div className="space-y-3">
