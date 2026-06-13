@@ -1,4 +1,4 @@
-import { Trophy, Target, Crown } from "lucide-react";
+import { Trophy, Target, Crown, TrendingUp } from "lucide-react";
 import { Layout } from "@/components/Layout";
 import { useRanking } from "@/lib/queries";
 import { useAuth } from "@/lib/auth";
@@ -6,6 +6,13 @@ import type { RankRow } from "@/lib/types";
 import { formatPoints } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+
+function calculateStats(row: RankRow) {
+  const mistakes = row.predictions - row.hits;
+  const accuracy = row.predictions > 0 ? Math.round((row.hits / row.predictions) * 100) : 0;
+  const avgPerMatch = row.settledMatches > 0 ? (row.balance / row.settledMatches).toFixed(1) : "0.0";
+  return { mistakes, accuracy, avgPerMatch };
+}
 
 export default function Ranking() {
   const { data: rows, isPending } = useRanking();
@@ -51,43 +58,63 @@ export default function Ranking() {
 function RankCard({ row, isMe }: { row: RankRow; isMe: boolean }) {
   const positive = row.balance > 0;
   const negative = row.balance < 0;
+  const { mistakes, accuracy, avgPerMatch } = calculateStats(row);
+
   return (
     <div
       className={cn(
-        "glass-card sheen flex items-center gap-3 rounded-xl p-3 transition-colors",
+        "glass-card sheen rounded-xl p-3 transition-colors",
         isMe && "border-primary/50 bg-primary/5"
       )}
     >
-      <RankBadge rank={row.rank} />
+      {/* Main row */}
+      <div className="flex items-center gap-3">
+        <RankBadge rank={row.rank} />
 
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <span className="truncate font-bold">{row.username}</span>
-          {isMe ? (
-            <span className="rounded bg-primary/20 px-1.5 py-0.5 text-[10px] font-bold uppercase text-primary">
-              Ty
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <span className="truncate font-bold">{row.username}</span>
+            {isMe ? (
+              <span className="rounded bg-primary/20 px-1.5 py-0.5 text-[10px] font-bold uppercase text-primary">
+                Ty
+              </span>
+            ) : null}
+          </div>
+          <div className="mt-0.5 flex items-center gap-2 text-[11px] text-muted-foreground">
+            <span className="flex items-center gap-1">
+              <Target className="h-3 w-3" /> {row.hits} / {row.predictions}
             </span>
-          ) : null}
+            <span className="text-success">
+              <TrendingUp className="inline h-3 w-3" /> {accuracy}%
+            </span>
+            <span>Ø {avgPerMatch} pkt</span>
+          </div>
         </div>
-        <div className="mt-0.5 flex items-center gap-3 text-[11px] text-muted-foreground">
-          <span className="flex items-center gap-1">
-            <Target className="h-3 w-3" /> {row.hits} traf.
-          </span>
-          <span>{row.predictions} typów</span>
-          <span>{row.settledMatches} rozlicz.</span>
+
+        <div
+          className={cn(
+            "font-score shrink-0 text-right text-xl font-bold tabular-nums",
+            positive && "text-success",
+            negative && "text-destructive",
+            !positive && !negative && "text-muted-foreground"
+          )}
+        >
+          {formatPoints(row.balance)}
+          <span className="ml-1 text-[10px] font-semibold uppercase text-muted-foreground">pkt</span>
         </div>
       </div>
 
-      <div
-        className={cn(
-          "font-score shrink-0 text-right text-xl font-bold tabular-nums",
-          positive && "text-success",
-          negative && "text-destructive",
-          !positive && !negative && "text-muted-foreground"
-        )}
-      >
-        {formatPoints(row.balance)}
-        <span className="ml-1 text-[10px] font-semibold uppercase text-muted-foreground">pkt</span>
+      {/* Detailed stats row */}
+      <div className="mt-2 flex gap-4 border-t border-border/30 pt-2 text-[10px] text-muted-foreground">
+        <div className="flex items-center gap-1">
+          <span className="font-semibold text-success">✓ {row.hits}</span> poprawne
+        </div>
+        <div className="flex items-center gap-1">
+          <span className="font-semibold text-destructive">✕ {mistakes}</span> błędne
+        </div>
+        <div className="ml-auto flex items-center gap-1">
+          {row.settledMatches} rozliczonych
+        </div>
       </div>
     </div>
   );
