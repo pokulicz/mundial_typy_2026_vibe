@@ -70,4 +70,35 @@ authRouter.patch(
   }
 );
 
+authRouter.post("/register", zValidator("json", LoginSchema), async (c) => {
+  const { username, pin } = c.req.valid("json");
+
+  // Check if username already exists
+  const existing = await prisma.user.findUnique({ where: { username } });
+  if (existing) {
+    throw new HttpError(400, "Nazwa użytkownika już istnieje", "USERNAME_TAKEN");
+  }
+
+  const pinHash = await Bun.password.hash(pin);
+  const user = await prisma.user.create({
+    data: {
+      username,
+      pinHash,
+      role: "PLAYER",
+      active: true,
+    },
+  });
+
+  await createSession(c, user.id);
+  return c.json({
+    data: {
+      id: user.id,
+      username: user.username,
+      role: user.role,
+      active: user.active,
+      createdAt: user.createdAt.toISOString(),
+    },
+  });
+});
+
 export { authRouter };
