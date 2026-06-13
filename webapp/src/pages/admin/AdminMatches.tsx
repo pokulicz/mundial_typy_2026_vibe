@@ -50,7 +50,7 @@ import { toast } from "sonner";
 export default function AdminMatches() {
   const { data: matches, isPending } = useMatches();
   const [filter, setFilter] = useState<"ALL" | Phase>("ALL");
-  const [autoRefreshInterval, setAutoRefreshInterval] = useState<5 | 10 | 15>(5); // minutes
+  const [autoRefreshInterval, setAutoRefreshInterval] = useState<1 | 5 | 10 | 15>(1); // minutes
   const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(false);
   const invalidate = useInvalidateAll();
 
@@ -125,10 +125,11 @@ export default function AdminMatches() {
             </label>
             <select
               value={autoRefreshInterval}
-              onChange={(e) => setAutoRefreshInterval(Number(e.target.value) as 5 | 10 | 15)}
+              onChange={(e) => setAutoRefreshInterval(Number(e.target.value) as 1 | 5 | 10 | 15)}
               disabled={!autoRefreshEnabled}
               className="rounded border border-border bg-card px-2 py-1 text-sm font-semibold disabled:opacity-50"
             >
+              <option value={1}>1 min</option>
               <option value={5}>5 min</option>
               <option value={10}>10 min</option>
               <option value={15}>15 min</option>
