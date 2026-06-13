@@ -117,4 +117,15 @@ predictionsRouter.get("/match/:matchId", async (c) => {
   });
 });
 
+// Delete all my predictions
+predictionsRouter.delete("/mine", async (c) => {
+  const user = requireUser(c);
+  const result = await prisma.prediction.deleteMany({
+    where: { userId: user.id },
+  });
+  return c.json({
+    data: { deleted: result.count },
+  });
+});
+
 export { predictionsRouter };

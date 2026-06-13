@@ -1,18 +1,43 @@
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
-import { ListChecks, CircleCheck, CircleX, Lock } from "lucide-react";
+import { ListChecks, CircleCheck, CircleX, Lock, Trash2 } from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
 import { Layout } from "@/components/Layout";
-import { useMatches, useMyPredictions } from "@/lib/queries";
+import { useMatches, useMyPredictions, useInvalidateAll } from "@/lib/queries";
+import { api } from "@/lib/api";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import type { MatchDTO, PredictionDTO } from "@/lib/types";
 import { PHASE_LABELS } from "@/lib/types";
 import { formatDay } from "@/lib/format";
 import { Flag } from "@/components/Flag";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 
 export default function MyBets() {
   const { data: matches, isPending } = useMatches();
   const { data: preds } = useMyPredictions();
+  const invalidate = useInvalidateAll();
+
+  const deleteAll = useMutation({
+    mutationFn: () => api.delete("/api/predictions/mine"),
+    onSuccess: () => {
+      toast.success("Wszystkie typy usunięte");
+      invalidate();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   const matchMap = useMemo(() => {
     const m = new Map<string, MatchDTO>();
@@ -75,6 +100,35 @@ export default function MyBets() {
             {rows.map((r) => (
               <BetRow key={r.pred.id} match={r.match} pred={r.pred} />
             ))}
+          </div>
+
+          <div className="mt-6 flex justify-end">
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="ghost" className="text-destructive hover:text-destructive">
+                  <Trash2 className="mr-2 h-4 w-4" /> Usuń wszystkie typy
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Usunąć wszystkie typy?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Ta czynność nie może być cofnięta. Wszystkie {stats.total} typów zostanie
+                    usunięte.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Anuluj</AlertDialogCancel>
+                  <AlertDialogAction
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    onClick={() => deleteAll.mutate()}
+                    disabled={deleteAll.isPending}
+                  >
+                    {deleteAll.isPending ? "Usuwanie..." : "Usuń wszystko"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </>
       )}
