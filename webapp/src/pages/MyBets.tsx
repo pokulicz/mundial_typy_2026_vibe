@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { ListChecks, CircleCheck, CircleX, Lock, Trash2 } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { Layout } from "@/components/Layout";
-import { useMatches, useMyPredictions, useInvalidateAll } from "@/lib/queries";
+import { useMatches, useMyPredictions, useInvalidateAll, useSettlement } from "@/lib/queries";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import {
@@ -165,6 +165,9 @@ function BetRow({ match, pred }: { match: MatchDTO; pred: PredictionDTO }) {
   const hit =
     hasResult && pred.homeScore === match.homeScore && pred.awayScore === match.awayScore;
 
+  const { data: settlement } = useSettlement(match.id, match.settled ?? false);
+  const myPoints = settlement?.find((e) => e.homeScore === pred.homeScore && e.awayScore === pred.awayScore)?.points ?? null;
+
   return (
     <Link
       to={`/mecz/${match.id}`}
@@ -194,14 +197,26 @@ function BetRow({ match, pred }: { match: MatchDTO; pred: PredictionDTO }) {
           {pred.homeScore}:{pred.awayScore}
         </div>
         {hasResult ? (
-          <div
-            className={cn(
-              "flex items-center justify-end gap-1 text-[11px] font-semibold",
-              hit ? "text-success" : "text-destructive"
+          <div className="space-y-1">
+            <div
+              className={cn(
+                "flex items-center justify-end gap-1 text-[11px] font-semibold",
+                hit ? "text-success" : "text-destructive"
+              )}
+            >
+              {hit ? <CircleCheck className="h-3 w-3" /> : <CircleX className="h-3 w-3" />}
+              wynik {match.homeScore}:{match.awayScore}
+            </div>
+            {match.settled && myPoints !== null && (
+              <div
+                className={cn(
+                  "font-score text-sm font-bold",
+                  myPoints > 0 ? "text-success" : myPoints < 0 ? "text-destructive" : "text-muted-foreground"
+                )}
+              >
+                {myPoints > 0 ? "+" : ""}{myPoints} pkt
+              </div>
             )}
-          >
-            {hit ? <CircleCheck className="h-3 w-3" /> : <CircleX className="h-3 w-3" />}
-            wynik {match.homeScore}:{match.awayScore}
           </div>
         ) : (
           <div className="text-[11px] text-muted-foreground">Twój typ</div>
