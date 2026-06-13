@@ -50,8 +50,13 @@ import { toast } from "sonner";
 export default function AdminMatches() {
   const { data: matches, isPending } = useMatches();
   const [filter, setFilter] = useState<"ALL" | Phase>("ALL");
-  const [autoRefreshInterval, setAutoRefreshInterval] = useState<1 | 5 | 10 | 15>(1); // minutes
-  const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(false);
+  const [autoRefreshInterval, setAutoRefreshInterval] = useState<1 | 5 | 10 | 15>(() => {
+    const saved = localStorage.getItem("autoRefreshInterval");
+    return saved ? (Number(saved) as 1 | 5 | 10 | 15) : 1;
+  });
+  const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(() => {
+    return localStorage.getItem("autoRefreshEnabled") === "true";
+  });
   const invalidate = useInvalidateAll();
 
   const refresh = useMutation({
@@ -67,6 +72,15 @@ export default function AdminMatches() {
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  // Save auto-refresh settings to localStorage
+  useEffect(() => {
+    localStorage.setItem("autoRefreshEnabled", String(autoRefreshEnabled));
+  }, [autoRefreshEnabled]);
+
+  useEffect(() => {
+    localStorage.setItem("autoRefreshInterval", String(autoRefreshInterval));
+  }, [autoRefreshInterval]);
 
   // Auto-refresh effect
   useEffect(() => {
