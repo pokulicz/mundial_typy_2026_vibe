@@ -180,7 +180,7 @@ function StatsBar({ stats, hasPrediction }: { stats: PredictionStats; hasPredict
           </span>
         ) : (
           <span className="flex items-center gap-1 rounded-md bg-secondary px-1.5 py-0.5 font-semibold text-foreground/80">
-            Masz ten wynik na wyłączność
+            Na razie nikt inny tego wyniku nie postawił
           </span>
         )
       ) : null}
