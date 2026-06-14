@@ -149,6 +149,26 @@ predictionsRouter.get("/match/:matchId", async (c) => {
   });
 });
 
+// Cancel my own prediction for one match. Allowed only while the match is open
+// (same lock rule as submitting).
+predictionsRouter.delete("/match/:matchId", async (c) => {
+  const user = requireUser(c);
+  const matchId = c.req.param("matchId");
+
+  const match = await prisma.match.findUnique({ where: { id: matchId } });
+  if (!match) throw new HttpError(404, "Nie znaleziono meczu", "NOT_FOUND");
+
+  if (isLocked(match)) {
+    throw new HttpError(403, "Typowanie tego meczu jest już zamknięte", "MATCH_LOCKED");
+  }
+
+  await prisma.prediction.deleteMany({
+    where: { userId: user.id, matchId },
+  });
+
+  return c.json({ data: { ok: true } });
+});
+
 // Delete all my predictions. Admin-only (dangerous reset option).
 predictionsRouter.delete("/mine", async (c) => {
   const user = requireAdmin(c);

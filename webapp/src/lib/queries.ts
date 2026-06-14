@@ -67,6 +67,19 @@ export function useSubmitPrediction() {
   });
 }
 
+// Cancel my own prediction for an open match.
+export function useDeletePrediction() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (matchId: string) => api.delete(`/api/predictions/match/${matchId}`),
+    onSuccess: (_data, matchId) => {
+      qc.invalidateQueries({ queryKey: ["predictions", "mine"] });
+      qc.invalidateQueries({ queryKey: ["predictions", "match", matchId] });
+      qc.invalidateQueries({ queryKey: ["predictions", "stats", matchId] });
+    },
+  });
+}
+
 // ---------- Ranking ----------
 export function useRanking() {
   return useQuery<RankRow[]>({

@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Lock, Check, Clock, MapPin, ChevronRight, CircleCheck, Users, Coins } from "lucide-react";
+import { Lock, Check, Clock, MapPin, ChevronRight, CircleCheck, Users, Coins, X } from "lucide-react";
 import type { MatchDTO, PredictionDTO, PredictionStats } from "@/lib/types";
 import { PHASE_LABELS } from "@/lib/types";
 import { formatTime, formatDay, timeUntil } from "@/lib/format";
 import { Flag } from "./Flag";
 import { ScoreStepper } from "./ScoreStepper";
 import { Button } from "@/components/ui/button";
-import { useSubmitPrediction, useMatchStats } from "@/lib/queries";
+import { useSubmitPrediction, useDeletePrediction, useMatchStats } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -20,6 +20,7 @@ export function MatchCard({ match, myPrediction }: MatchCardProps) {
   const [home, setHome] = useState<number | null>(myPrediction?.homeScore ?? null);
   const [away, setAway] = useState<number | null>(myPrediction?.awayScore ?? null);
   const submit = useSubmitPrediction();
+  const remove = useDeletePrediction();
   // Stats only matter while the match is open for typing.
   const { data: stats } = useMatchStats(match.id, !match.locked);
 
@@ -48,6 +49,17 @@ export function MatchCard({ match, myPrediction }: MatchCardProps) {
         onError: (e: Error) => toast.error(e.message || "Nie udało się zapisać"),
       }
     );
+  };
+
+  const handleCancel = () => {
+    remove.mutate(match.id, {
+      onSuccess: () => {
+        setHome(null);
+        setAway(null);
+        toast.success("Typ anulowany");
+      },
+      onError: (e: Error) => toast.error(e.message || "Nie udało się anulować"),
+    });
   };
 
   const cardBg =
@@ -125,23 +137,36 @@ export function MatchCard({ match, myPrediction }: MatchCardProps) {
             </Link>
           </div>
         ) : (
-          <Button
-            size="sm"
-            className={cn(
-              "h-8 font-semibold",
-              myPrediction && !dirty && "bg-success text-success-foreground hover:bg-success/90"
-            )}
-            disabled={!canSave || submit.isPending}
-            onClick={handleSave}
-          >
-            {myPrediction && !dirty ? (
-              <>
-                <Check className="mr-1 h-3.5 w-3.5" /> Zapisano
-              </>
-            ) : (
-              "Zapisz typ"
-            )}
-          </Button>
+          <div className="flex items-center gap-1.5">
+            {myPrediction ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 px-2 text-muted-foreground hover:text-destructive"
+                disabled={remove.isPending || submit.isPending}
+                onClick={handleCancel}
+              >
+                <X className="mr-1 h-3.5 w-3.5" /> Anuluj
+              </Button>
+            ) : null}
+            <Button
+              size="sm"
+              className={cn(
+                "h-8 font-semibold",
+                myPrediction && !dirty && "bg-success text-success-foreground hover:bg-success/90"
+              )}
+              disabled={!canSave || submit.isPending}
+              onClick={handleSave}
+            >
+              {myPrediction && !dirty ? (
+                <>
+                  <Check className="mr-1 h-3.5 w-3.5" /> Zapisano
+                </>
+              ) : (
+                "Zapisz typ"
+              )}
+            </Button>
+          </div>
         )}
       </div>
 
