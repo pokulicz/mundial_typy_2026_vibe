@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { prisma } from "../prisma";
 import { SubmitPredictionSchema } from "../types";
-import { requireUser, HttpError, type AppVariables } from "../auth";
+import { requireUser, requireAdmin, HttpError, type AppVariables } from "../auth";
 import { isLocked, POOL_PER_MATCH } from "../helpers";
 
 const predictionsRouter = new Hono<{ Variables: AppVariables }>();
@@ -149,9 +149,9 @@ predictionsRouter.get("/match/:matchId", async (c) => {
   });
 });
 
-// Delete all my predictions
+// Delete all my predictions. Admin-only (dangerous reset option).
 predictionsRouter.delete("/mine", async (c) => {
-  const user = requireUser(c);
+  const user = requireAdmin(c);
   const result = await prisma.prediction.deleteMany({
     where: { userId: user.id },
   });

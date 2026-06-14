@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { ListChecks, CircleCheck, CircleX, Lock, Trash2 } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { Layout } from "@/components/Layout";
+import { useAuth } from "@/lib/auth";
 import { useMatches, useMyPredictions, useInvalidateAll, useSettlement } from "@/lib/queries";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 
 export default function MyBets() {
+  const { isAdmin } = useAuth();
   const { data: matches, isPending } = useMatches();
   const { data: preds } = useMyPredictions();
   const invalidate = useInvalidateAll();
@@ -102,6 +104,7 @@ export default function MyBets() {
             ))}
           </div>
 
+          {isAdmin ? (
           <div className="mt-6 flex justify-end">
             <AlertDialog>
               <AlertDialogTrigger asChild>
@@ -130,6 +133,7 @@ export default function MyBets() {
               </AlertDialogContent>
             </AlertDialog>
           </div>
+          ) : null}
         </>
       )}
     </Layout>
