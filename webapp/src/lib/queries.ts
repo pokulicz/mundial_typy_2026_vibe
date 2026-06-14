@@ -7,6 +7,7 @@ import type {
   SettlementEntry,
   PublicUser,
   AdminPredictionRow,
+  PredictionStats,
 } from "./types";
 
 // ---------- Matches ----------
@@ -41,6 +42,15 @@ export function useMatchPredictions(matchId: string | undefined, enabled = true)
   });
 }
 
+// Aggregate stats for one match (counts only — total typów, pula, ile graczy ma ten sam wynik).
+export function useMatchStats(matchId: string | undefined, enabled = true) {
+  return useQuery<PredictionStats>({
+    queryKey: ["predictions", "stats", matchId],
+    queryFn: () => api.get<PredictionStats>(`/api/predictions/match/${matchId}/stats`),
+    enabled: !!matchId && enabled,
+  });
+}
+
 export function useSubmitPrediction() {
   const qc = useQueryClient();
   return useMutation({
@@ -52,6 +62,7 @@ export function useSubmitPrediction() {
     onSuccess: (_data, vars) => {
       qc.invalidateQueries({ queryKey: ["predictions", "mine"] });
       qc.invalidateQueries({ queryKey: ["predictions", "match", vars.matchId] });
+      qc.invalidateQueries({ queryKey: ["predictions", "stats", vars.matchId] });
     },
   });
 }

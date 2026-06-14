@@ -9,7 +9,7 @@ export function isLocked(match: Match, now: Date = new Date()): boolean {
 }
 
 const LIVE_WINDOW_MS = 150 * 60 * 1000; // ~2.5h: assume a match is "live" within this window
-const POOL_PER_MATCH = 2; // punkty za każdego typującego
+export const POOL_PER_MATCH = 2; // punkty za każdego typującego
 
 // Derived match status for display.
 export type MatchStatus = "UPCOMING" | "LIVE" | "AWAITING" | "FINISHED";

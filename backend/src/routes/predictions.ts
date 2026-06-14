@@ -3,7 +3,7 @@ import { zValidator } from "@hono/zod-validator";
 import { prisma } from "../prisma";
 import { SubmitPredictionSchema } from "../types";
 import { requireUser, HttpError, type AppVariables } from "../auth";
-import { isLocked } from "../helpers";
+import { isLocked, POOL_PER_MATCH } from "../helpers";
 
 const predictionsRouter = new Hono<{ Variables: AppVariables }>();
 
@@ -63,6 +63,38 @@ predictionsRouter.put(
     });
   }
 );
+
+// Aggregate stats for a match — counts only, never reveals individual picks,
+// so it is safe to show before kickoff (informational, doesn't help copying).
+predictionsRouter.get("/match/:matchId/stats", async (c) => {
+  const user = requireUser(c);
+  const matchId = c.req.param("matchId");
+  const match = await prisma.match.findUnique({ where: { id: matchId } });
+  if (!match) throw new HttpError(404, "Nie znaleziono meczu", "NOT_FOUND");
+
+  const total = await prisma.prediction.count({ where: { matchId } });
+
+  // How many players (incl. me) picked the exact same score as my saved type.
+  const mine = await prisma.prediction.findUnique({
+    where: { userId_matchId: { userId: user.id, matchId } },
+  });
+  let sameScore: number | null = null;
+  if (mine) {
+    sameScore = await prisma.prediction.count({
+      where: { matchId, homeScore: mine.homeScore, awayScore: mine.awayScore },
+    });
+  }
+
+  return c.json({
+    data: {
+      matchId,
+      total,
+      pool: total * POOL_PER_MATCH,
+      poolPerMatch: POOL_PER_MATCH,
+      sameScore,
+    },
+  });
+});
 
 // All predictions for a match.
 // Visibility rule (server-enforced):

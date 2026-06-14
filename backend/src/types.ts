@@ -144,6 +144,18 @@ export const PredictionSchema = z.object({
 });
 export type PredictionDTO = z.infer<typeof PredictionSchema>;
 
+// Aggregate stats for a match (safe to show before kickoff — counts only, never
+// which user picked what). Used to display "ile typów / pula" and how many other
+// players picked the same exact score as you.
+export const PredictionStatsSchema = z.object({
+  matchId: z.string(),
+  total: z.number(), // ile typów już postawiono na ten mecz
+  pool: z.number(), // aktualna pula punktów (total * poolPerMatch)
+  poolPerMatch: z.number(), // ile punktów wnosi jeden typujący
+  sameScore: z.number().nullable(), // ilu graczy (łącznie z Tobą) ma ten sam wynik co Twój typ; null gdy nie masz typu
+});
+export type PredictionStats = z.infer<typeof PredictionStatsSchema>;
+
 // ---------- Ranking ----------
 
 export const RankRowSchema = z.object({

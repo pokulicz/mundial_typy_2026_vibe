@@ -65,6 +65,14 @@ export interface PredictionDTO {
   updatedAt: string;
 }
 
+export interface PredictionStats {
+  matchId: string;
+  total: number;
+  pool: number;
+  poolPerMatch: number;
+  sameScore: number | null;
+}
+
 export interface RankRow {
   rank: number;
   userId: string;

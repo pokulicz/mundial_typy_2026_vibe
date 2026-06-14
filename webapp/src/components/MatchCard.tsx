@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Lock, Check, Clock, MapPin, ChevronRight, CircleCheck } from "lucide-react";
-import type { MatchDTO, PredictionDTO } from "@/lib/types";
+import { Lock, Check, Clock, MapPin, ChevronRight, CircleCheck, Users, Coins } from "lucide-react";
+import type { MatchDTO, PredictionDTO, PredictionStats } from "@/lib/types";
 import { PHASE_LABELS } from "@/lib/types";
 import { formatTime, formatDay, timeUntil } from "@/lib/format";
 import { Flag } from "./Flag";
 import { ScoreStepper } from "./ScoreStepper";
 import { Button } from "@/components/ui/button";
-import { useSubmitPrediction } from "@/lib/queries";
+import { useSubmitPrediction, useMatchStats } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -20,6 +20,8 @@ export function MatchCard({ match, myPrediction }: MatchCardProps) {
   const [home, setHome] = useState<number | null>(myPrediction?.homeScore ?? null);
   const [away, setAway] = useState<number | null>(myPrediction?.awayScore ?? null);
   const submit = useSubmitPrediction();
+  // Stats only matter while the match is open for typing.
+  const { data: stats } = useMatchStats(match.id, !match.locked);
 
   useEffect(() => {
     setHome(myPrediction?.homeScore ?? null);
@@ -142,6 +144,46 @@ export function MatchCard({ match, myPrediction }: MatchCardProps) {
           </Button>
         )}
       </div>
+
+      {/* open-match stats: ile typów + pula, and how many share your score */}
+      {!locked && stats ? <StatsBar stats={stats} hasPrediction={!!myPrediction} /> : null}
+    </div>
+  );
+}
+
+function plural(n: number, one: string, few: string, many: string): string {
+  const m10 = n % 10;
+  const m100 = n % 100;
+  if (n === 1) return one;
+  if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return few;
+  return many;
+}
+
+function StatsBar({ stats, hasPrediction }: { stats: PredictionStats; hasPrediction: boolean }) {
+  const same = stats.sameScore;
+  return (
+    <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border/40 pt-2 text-[11px] text-muted-foreground">
+      <span className="flex items-center gap-1">
+        <Users className="h-3 w-3 shrink-0" />
+        {stats.total > 0
+          ? `${stats.total} ${plural(stats.total, "typ", "typy", "typów")}`
+          : "Brak typów — bądź pierwszy!"}
+      </span>
+      <span className="flex items-center gap-1">
+        <Coins className="h-3 w-3 shrink-0" />
+        Pula {stats.pool} pkt
+      </span>
+      {hasPrediction && same !== null ? (
+        same > 1 ? (
+          <span className="flex items-center gap-1 rounded-md bg-primary/15 px-1.5 py-0.5 font-semibold text-primary">
+            Ten wynik ma już {same} {plural(same, "typ", "typy", "typów")} (w tym Twój)
+          </span>
+        ) : (
+          <span className="flex items-center gap-1 rounded-md bg-secondary px-1.5 py-0.5 font-semibold text-foreground/80">
+            Masz ten wynik na wyłączność
+          </span>
+        )
+      ) : null}
     </div>
   );
 }
