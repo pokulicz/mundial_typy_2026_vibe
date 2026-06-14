@@ -43,11 +43,15 @@ export function useMatchPredictions(matchId: string | undefined, enabled = true)
 }
 
 // Aggregate stats for one match (counts only — total typów, pula, ile graczy ma ten sam wynik).
+// Auto-refreshes while the match is open so the "same score" hint stays accurate
+// even when *other* players add matching predictions.
 export function useMatchStats(matchId: string | undefined, enabled = true) {
   return useQuery<PredictionStats>({
     queryKey: ["predictions", "stats", matchId],
     queryFn: () => api.get<PredictionStats>(`/api/predictions/match/${matchId}/stats`),
     enabled: !!matchId && enabled,
+    refetchInterval: enabled ? 30000 : false, // co 30 s, tylko dla otwartych meczów
+    refetchOnWindowFocus: true, // odśwież po powrocie do karty
   });
 }
 
