@@ -1,0 +1,1 @@
+web: bunx --bun src/index.ts
