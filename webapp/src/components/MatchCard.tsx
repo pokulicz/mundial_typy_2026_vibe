@@ -176,7 +176,7 @@ function StatsBar({ stats, hasPrediction }: { stats: PredictionStats; hasPredict
       {hasPrediction && same !== null ? (
         same > 1 ? (
           <span className="flex items-center gap-1 rounded-md bg-primary/15 px-1.5 py-0.5 font-semibold text-primary">
-            Ten wynik ma już {same} {plural(same, "typ", "typy", "typów")} (w tym Twój)
+            Ten wynik został już postawiony przez {same} graczy (razem z Tobą)
           </span>
         ) : (
           <span className="flex items-center gap-1 rounded-md bg-secondary px-1.5 py-0.5 font-semibold text-foreground/80">
