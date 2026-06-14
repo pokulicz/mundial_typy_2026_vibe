@@ -162,9 +162,10 @@ predictionsRouter.delete("/match/:matchId", async (c) => {
     throw new HttpError(403, "Typowanie tego meczu jest już zamknięte", "MATCH_LOCKED");
   }
 
-  await prisma.prediction.deleteMany({
-    where: { userId: user.id, matchId },
-  });
+  // Remove the prediction and any settlement entry tied to it, so the ranking
+  // never keeps phantom stats for a typ that no longer exists.
+  await prisma.prediction.deleteMany({ where: { userId: user.id, matchId } });
+  await prisma.pointEntry.deleteMany({ where: { userId: user.id, matchId } });
 
   return c.json({ data: { ok: true } });
 });
@@ -175,6 +176,9 @@ predictionsRouter.delete("/mine", async (c) => {
   const result = await prisma.prediction.deleteMany({
     where: { userId: user.id },
   });
+  // Also wipe my settlement entries — otherwise the ranking would still show
+  // hits/mistakes/points for typy that have just been removed.
+  await prisma.pointEntry.deleteMany({ where: { userId: user.id } });
   return c.json({
     data: { deleted: result.count },
   });

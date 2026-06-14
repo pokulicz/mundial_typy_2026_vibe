@@ -11,12 +11,14 @@ rankingRouter.get("/", async (c) => {
 
   const users = await prisma.user.findMany();
   const points = await prisma.pointEntry.findMany();
-  // Count of predictions placed per user (settled or not).
-  const predsByUser = await prisma.prediction.groupBy({
-    by: ["userId"],
-    _count: { _all: true },
+  // Open predictions = typy placed on matches that are not settled yet.
+  const preds = await prisma.prediction.findMany({
+    select: { userId: true, match: { select: { settled: true } } },
   });
-  const predCount = new Map(predsByUser.map((p) => [p.userId, p._count._all]));
+  const openByUser = new Map<string, number>();
+  for (const p of preds) {
+    if (!p.match.settled) openByUser.set(p.userId, (openByUser.get(p.userId) ?? 0) + 1);
+  }
 
   const rows: Omit<RankRow, "rank">[] = users.map((u) => {
     const mine = points.filter((p) => p.userId === u.id);
@@ -24,8 +26,7 @@ rankingRouter.get("/", async (c) => {
     const hits = mine.filter((p) => p.hit).length;
     const settledMatches = new Set(mine.map((p) => p.matchId)).size; // unique matches
     const mistakes = mine.length - hits; // points entries that are not hits
-    // Open = placed predictions that don't yet have a settlement entry.
-    const openPredictions = Math.max(0, (predCount.get(u.id) ?? 0) - settledMatches);
+    const openPredictions = openByUser.get(u.id) ?? 0;
     return {
       userId: u.id,
       username: u.username,
