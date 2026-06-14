@@ -81,6 +81,7 @@ export interface RankRow {
   hits: number;
   predictions: number;
   settledMatches: number;
+  openPredictions: number;
 }
 
 export interface SettlementEntry {

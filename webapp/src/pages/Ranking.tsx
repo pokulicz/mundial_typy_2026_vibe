@@ -112,6 +112,9 @@ function RankCard({ row, isMe }: { row: RankRow; isMe: boolean }) {
         <div className="flex items-center gap-1">
           <span className="font-semibold text-destructive">✕ {mistakes}</span> błędne
         </div>
+        <div className="flex items-center gap-1">
+          <span className="font-semibold text-primary">◷ {row.openPredictions}</span> otwartych
+        </div>
         <div className="ml-auto flex items-center gap-1">
           {row.settledMatches} rozliczonych
         </div>

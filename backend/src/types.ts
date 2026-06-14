@@ -166,6 +166,7 @@ export const RankRowSchema = z.object({
   hits: z.number(),
   predictions: z.number(),
   settledMatches: z.number(),
+  openPredictions: z.number(), // typy postawione, ale jeszcze nierozliczone
 });
 export type RankRow = z.infer<typeof RankRowSchema>;
 
